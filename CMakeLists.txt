@@ -1,5 +1,5 @@
 
-set(SOURCE src/main.c)
+set(SOURCE src/main.c )
 set(PROJECT_NAME New_folder)
 
 cmake_minimum_required(VERSION 3.21)
