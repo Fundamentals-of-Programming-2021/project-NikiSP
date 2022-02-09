@@ -15,7 +15,7 @@ const int SCREEN_WIDTH = 1000;
 const int SCREEN_HEIGHT = 800;
 
 Uint32 playerscolors[1000];
-int attack[30][10][1000000];
+int attack[30][10][10000];
 
 int dots[2][30];
 char tags[30];
@@ -30,7 +30,7 @@ int start=-1;
 int end=-1;
 int do_once[10][30];
 
-double soldiers_coordinate[10][2][1000000];
+double soldiers_coordinate[10][2][10000];
 double tan1=0;
 double change=-1;
 double sign=0;
@@ -67,9 +67,9 @@ int isitthere(int num,double x,double y)
 }
 
 
-void check_destination(int start,int end, int playernum)
+void check_destination(int end, int playernum)
 {
-    counter[start]--;
+
 
     if(!select_dots[0][end])
     {
@@ -89,12 +89,173 @@ void check_destination(int start,int end, int playernum)
             counter[end]--;
         }
     }
+
+
+
 }
+
+int next_soldier(int x, int y, int start)
+{
+    int overall=10;
+    switch(tags[start])
+    {
+        case 's':
+            overall+=10;
+            break;
+
+        case 'm':
+            overall+=20;
+            break;
+
+        case 'l':
+            overall+=30;
+            break;
+    }
+
+    int currentdistance=((dots[0][start]-x)*(dots[0][start]-x))+((dots[1][start]-y)*(dots[1][start]-y));
+    if(currentdistance<0)
+    {
+        currentdistance*=-1;
+    }
+
+    if(currentdistance>=overall)
+    {
+        return 1;
+
+    }
+
+    return 0;
+
+}
+
+
+
+
+
 int attackcount[30];
 
+int tempcurrentstate[30][10];
+
+///////////////
+#define playercount 5
+
+int attack_soldiercount[playercount][10];
+int attack_status[playercount][10];
+int attackcount_mp=0;
+int attack_startingpoint[playercount][10];
+int attack_endingpoint[playercount][10];
+int soldiers_coordinates[playercount][2][10000];
+int startdraw[30][10];
+int eliminatefurthur[playercount][10];
+
+
+/////////////
+
+
+int attack_function(int attacknum,int attackernum, SDL_Renderer *sdlRenderer )
+{
+    if(attack_soldiercount[attackernum][attacknum]==0)
+    {
+        attack_status[attackernum][attacknum]=0;
+        return 0;
+    }
+
+    if(!do_once[attackernum][attacknum])
+    {
+
+        do_once[attackernum][attacknum]=1;
+
+        tan1=(((double)(dots[1][end]) - (double)(dots[1][start])) /(double)((dots[0][end]) - (double)(dots[0][start])));
+
+        if(tan>0)
+        {
+            if(dots[0][end]>dots[0][start])
+            {
+                change=1;
+                sign=1;
+            }
+            else
+            {
+                change=-1;
+                sign=1;
+            }
+
+        }
+        else
+        {
+            if(dots[0][end]>dots[0][start])
+            {
+                change=1;
+                sign=1;
+            }
+            else
+            {
+                change=-1;
+                sign=1;
+            }
+
+        }
+
+        for(int i=0;i<attack_soldiercount[attackernum][attacknum];i++)
+        {
+            soldiers_coordinates[attackernum][0][i]=dots[0][attack_startingpoint[attackernum][attacknum]];
+            soldiers_coordinates[attacknum][1][i]=dots[1][attack_startingpoint[attackernum][attacknum]];
+
+        }
+
+        eliminatefurthur[attackernum][attacknum]=0;
+        startdraw[attackernum][attacknum]=1;
+
+    }
+    int i;
+    for(i=eliminatefurthur[attackernum][attacknum];i<startdraw[attackernum][attacknum];i++)
+    {
+        if(isitthere(attack_endingpoint[attackernum][attacknum],soldiers_coordinates[attacknum][0][i],soldiers_coordinates[attacknum][1][i]))
+        {
+            check_destination(attack_endingpoint[attackernum][attacknum],attackernum);
+            attack_soldiercount[attackernum][attacknum]--;
+            eliminatefurthur[attackernum][attacknum]++;
+        }
+
+
+        filledCircleColor(sdlRenderer,(Sint16) soldiers_coordinates[attacknum][0][i],(Sint16)soldiers_coordinates[attacknum][1][i],5, playerscolors[attackernum]);
+        if(dots[0][attack_startingpoint[attackernum][attacknum]]!=dots[0][attack_endingpoint[attackernum][attacknum]])
+        {
+            soldiers_coordinates[attacknum][0][i]+=change;
+            soldiers_coordinates[attacknum][0][i]+=(sign*change*tan1);
+        }
+        else
+        {
+            if(dots[1][attack_startingpoint[attackernum][attacknum]]>dots[1][attack_endingpoint[attackernum][attacknum]])
+                soldiers_coordinates[attacknum][0][i]--;
+            else
+                soldiers_coordinates[attacknum][0][i]++;
+        }
+
+    }
+
+    i--;
+    if(next_soldier(soldiers_coordinates[attacknum][0][i],soldiers_coordinates[attacknum][1][i],attack_startingpoint[attackernum][attacknum]))
+    {
+        startdraw[attackernum][attacknum]++;
+        counter[attack_startingpoint[attackernum][attacknum]]--;
+    }
+
+
+return 1;
+
+}
 
 
 
+
+
+
+
+
+
+
+/*
 void attack_func(int attackernum, int target[][10][1] , SDL_Renderer *sdlRenderer)
 {
     for(int j=0;j<attackcount[attackernum];j++)
@@ -156,7 +317,7 @@ void attack_func(int attackernum, int target[][10][1] , SDL_Renderer *sdlRendere
 
             if(attack[attackernum][j][i]!=0)
             {                                                                                                //REMEMBER TO CHANGE THE COLOR
-                filledCircleColor(sdlRenderer,(Sint16) soldiers_coordinate[0][i],(Sint16)soldiers_coordinate[1][i],5,playerscolors[attackernum]);
+                filledCircleColor(sdlRenderer,(Sint16) soldiers_coordinate[0][i],(Sint16)soldiers_coordinate[1][i],5, playerscolors[attackernum]);
 
             }
             if(dots[0][start]!=dots[0][end])
@@ -176,7 +337,7 @@ void attack_func(int attackernum, int target[][10][1] , SDL_Renderer *sdlRendere
 
 
 }
-
+*/
 
 
 
@@ -942,7 +1103,7 @@ int player_count=1;
 
     int x_clickstartpoint,y_clickstartpoint;
     int Dotnum=-1;
-    int target[30][10][1];
+    int target;
 
 
 
@@ -1209,15 +1370,29 @@ begintime=time(NULL);
 
 
 
+            for(int i=0;i<playercount;i++)
+            {
+                for(int j=0;j<attackcount_mp;j++)
+                {
+                    if(attack_status[i][attackcount_mp])
+                    {
+                        attack_function(i,j,sdlRenderer);
+                    }
+                }
+            }
+
+
+
+            /*
             if(soldierleft(player_count,temp,attack)||checkattack)
             {
-                attack_func(currentattackumber,target,sdlRenderer);
+                attack_function(,sdlRenderer);
             }
             if((attackcount[currentattackumber]==9)&&(!(soldierleft(player_count,temp,attack)||checkattack)))
             {
                 attackcount[currentattackumber]=0;
             }
-
+            */
 
 
 
@@ -1253,11 +1428,19 @@ begintime=time(NULL);
                             once_pressed=0;
                             playerscolors[0]=0xff0000ff;
 
-                            target[0][attackcount[0]][0]=inthecircle('t',x_clickstartpoint,y_clickstartpoint,district,select_dots);
-                            if(target[0][attackcount[0]][0])
+                            target=inthecircle('t',x_clickstartpoint,y_clickstartpoint,district,select_dots);
+                            if(target)
                             {
-                                target[0][attackcount[0]][0]--;
-                                checkattack=counter[Dotnum];
+                                target--;
+                                attack_soldiercount[0][attackcount_mp]=counter[Dotnum];
+                                attack_status[0][attackcount_mp]=1;
+                                attack_startingpoint[0][attackcount_mp]=Dotnum;
+                                attack_endingpoint[0][attackcount_mp]=target;
+                                DontRecolor[Dotnum]=0;
+                                attackcount_mp++;
+                                break;
+
+                                /*checkattack=counter[Dotnum];
                                 start=Dotnum;
                                 temp[0][attackcount[0]][0]=checkattack;
                                 end=target[0][attackcount[0]][0];
@@ -1265,7 +1448,7 @@ begintime=time(NULL);
                                 DontRecolor[Dotnum]=0;
                                 currentattackumber=0;
                                 attackcount[0]++;
-                                break;
+                                break;*/
 
 
                             }
