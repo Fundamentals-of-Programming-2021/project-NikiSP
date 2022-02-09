@@ -15,7 +15,7 @@ const int SCREEN_WIDTH = 1000;
 const int SCREEN_HEIGHT = 800;
 
 Uint32 playerscolors[1000];
-int attack[50];
+int attack[30][10][1000000];
 
 int dots[2][30];
 char tags[30];
@@ -28,12 +28,16 @@ time_t begintime;
 int checkattack=0;
 int start=-1;
 int end=-1;
-int do_once=0;
-double soldiers_coordinate[2][50];
+int do_once[10][30];
+
+double soldiers_coordinate[10][2][1000000];
 double tan1=0;
 double change=-1;
 double sign=0;
-int temp=0;
+
+int temp[30][10][1];
+
+int currentattackumber;
 
 int isitthere(int num,double x,double y)
 {
@@ -86,80 +90,86 @@ void check_destination(int start,int end, int playernum)
         }
     }
 }
+int attackcount[30];
 
 
 
 
-
-void attack_func(int attackernum, int target , SDL_Renderer *sdlRenderer)
+void attack_func(int attackernum, int target[][10][1] , SDL_Renderer *sdlRenderer)
 {
-        if(!do_once)
-        {
-            temp=checkattack;
-            do_once=1;
-
-            tan1=(((double)(dots[1][end]) - (double)(dots[1][start])) /(double)((dots[0][end]) - (double)(dots[0][start])));
-
-            if(tan>0)
-            {
-                if(dots[0][end]>dots[0][start])
-                {
-                    change=1;
-                    sign=1;
-                }
-                else
-                {
-                    change=-1;
-                    sign=1;
-                }
-
-            }
-            else
-            {
-                if(dots[0][end]>dots[0][start])
-                {
-                    change=1;
-                    sign=1;
-                }
-                else
-                {
-                    change=-1;
-                    sign=1;
-                }
-
-            }
-            for(int i=0;i<temp;i++)
-            {
-                soldiers_coordinate[0][i]=dots[0][start];
-                soldiers_coordinate[1][i]=dots[1][start];
-                attack[i]=1;
-            }
-            checkattack=0;
-        }
-
-
-    for(int i=0;i<temp;i++)
+    for(int j=0;j<attackcount[attackernum];j++)
     {
-        int reached_destination=isitthere(target,soldiers_coordinate[0][i],soldiers_coordinate[1][i]);
-        if(reached_destination)
-        {
-            check_destination(start,end,0);
-            attack[i]=0;
-        }
+            if(!do_once[j][attackernum])
+            {
+                temp[attackernum][j][0]=checkattack;
+                do_once[j][attackernum]=1;
 
-        if(attack[i]!=0)
-        {                                                                                                           //REMEMBER TO CHANGE THE COLOR
-            filledCircleColor(sdlRenderer,(Sint16) soldiers_coordinate[0][i],(Sint16)soldiers_coordinate[1][i],5,playerscolors[attackernum]);
+                tan1=(((double)(dots[1][end]) - (double)(dots[1][start])) /(double)((dots[0][end]) - (double)(dots[0][start])));
 
-        }
-        if(dots[0][start]!=dots[0][end])
+                if(tan>0)
+                {
+                    if(dots[0][end]>dots[0][start])
+                    {
+                        change=1;
+                        sign=1;
+                    }
+                    else
+                    {
+                        change=-1;
+                        sign=1;
+                    }
+
+                }
+                else
+                {
+                    if(dots[0][end]>dots[0][start])
+                    {
+                        change=1;
+                        sign=1;
+                    }
+                    else
+                    {
+                        change=-1;
+                        sign=1;
+                    }
+
+                }
+
+                for(int i=0;i<temp[attackernum][j][0];i++)
+                {
+                    soldiers_coordinate[j][0][i]=dots[0][start];
+                    soldiers_coordinate[j][1][i]=dots[1][start];
+                    attack[attackernum][j][i]=1;
+                }
+                checkattack=0;
+            }
+
+
+        for(int i=0;i<temp[attackernum][j][0];i++)
         {
-            soldiers_coordinate[0][i] += (change);
-            soldiers_coordinate[1][i] += ((sign*(change)) * tan1);
-        }
-        if(dots[0][start]==dots[0][end])
-        {
-            soldiers_coordinate[1][i]+=2;
+            int reached_destination=isitthere(target[attackernum][j][0],soldiers_coordinate[j][0][i],soldiers_coordinate[j][1][i]);
+            if(reached_destination)
+            {
+                check_destination(start,end,0);
+                attack[attackernum][j][i]=0;
+            }
+
+            if(attack[attackernum][j][i]!=0)
+            {                                                                                                //REMEMBER TO CHANGE THE COLOR
+                filledCircleColor(sdlRenderer,(Sint16) soldiers_coordinate[0][i],(Sint16)soldiers_coordinate[1][i],5,playerscolors[attackernum]);
+
+            }
+            if(dots[0][start]!=dots[0][end])
+            {
+                soldiers_coordinate[j][0][i] += (change);
+                soldiers_coordinate[j][1][i] += ((sign*(change)) * tan1);
+
+            }
+            if(dots[0][start]==dots[0][end])
+            {
+                soldiers_coordinate[j][1][i]+=1;
+            }
+
         }
 
     }
@@ -386,14 +396,22 @@ void RandomMap(int *district,int District)
 
 
 
-int soldierleft(int temp, int attack[])
+int soldierleft(int player_count,int temp[][10][0], int attack[][10][1])
 {
-    for(int i=0;i<temp;i++)
+    for(int i=0;i<player_count;i++)
     {
-        if(attack[i]!=0)
+        for(int j=0;j<attackcount[i];j++)
         {
-            return 1;
+            for(int k=0;k<temp[i][j][0];k++)
+            {
+                if(attack[i][j][k])
+                {
+                    return 1;
+                }
+            }
+
         }
+
     }
 return 0;
 }
@@ -834,6 +852,21 @@ int main()
     SDL_Renderer *sdlRenderer = SDL_CreateRenderer(sdlWindow, -1, SDL_RENDERER_PRESENTVSYNC | SDL_RENDERER_ACCELERATED);
 
 
+    for(int i=0;i<30;i++)
+    {
+        attackcount[i]=0;
+    }
+
+
+    for(int i=0;i<10;i++)
+    {
+        for(int j=0;j<30;j++)
+        {
+            do_once[i][j]=0;
+        }
+    }
+
+
 
     struct potions potion[4];
     for(int i=0;i<4;i++)
@@ -870,7 +903,7 @@ int main()
         time1[i]=time(NULL);
     }
 
-
+int player_count=1;
 
     playerscolors[0]=0xff0000ff; //Red
     playerscolors[1]=0x0000ff00; //Blue
@@ -893,16 +926,23 @@ int main()
     }
 
 
-    for(int i=0;i<50;i++)
+    for(int i=0;i<player_count;i++)
     {
-        attack[i]=0;
+        for(int j=0;j<10;j++)
+        {
+            for(int k=0;k<10000;k++)
+            {
+                attack[i][j][k]=0;
+            }
+
+        }
     }
 
 
 
     int x_clickstartpoint,y_clickstartpoint;
     int Dotnum=-1;
-    int target=-1;
+    int target[30][10][1];
 
 
 
@@ -1169,12 +1209,14 @@ begintime=time(NULL);
 
 
 
-            if(soldierleft(temp,attack)||checkattack)
+            if(soldierleft(player_count,temp,attack)||checkattack)
             {
-                attack_func(0,target,sdlRenderer);
+                attack_func(currentattackumber,target,sdlRenderer);
             }
-
-
+            if((attackcount[currentattackumber]==9)&&(!(soldierleft(player_count,temp,attack)||checkattack)))
+            {
+                attackcount[currentattackumber]=0;
+            }
 
 
 
@@ -1211,16 +1253,18 @@ begintime=time(NULL);
                             once_pressed=0;
                             playerscolors[0]=0xff0000ff;
 
-                            target=inthecircle('t',x_clickstartpoint,y_clickstartpoint,district,select_dots);
-                            if(target)
+                            target[0][attackcount[0]][0]=inthecircle('t',x_clickstartpoint,y_clickstartpoint,district,select_dots);
+                            if(target[0][attackcount[0]][0])
                             {
-                                target--;
+                                target[0][attackcount[0]][0]--;
                                 checkattack=counter[Dotnum];
                                 start=Dotnum;
-                                temp=checkattack;
-                                end=target;
-                                do_once=0;
+                                temp[0][attackcount[0]][0]=checkattack;
+                                end=target[0][attackcount[0]][0];
+                                do_once[attackcount[0]][0]=0;
                                 DontRecolor[Dotnum]=0;
+                                currentattackumber=0;
+                                attackcount[0]++;
                                 break;
 
 
