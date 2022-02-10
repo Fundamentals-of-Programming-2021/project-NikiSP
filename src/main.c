@@ -8,6 +8,7 @@
 #include <stdio.h>
 #include <stdbool.h>
 #include <time.h>
+#include <math.h>
 
 //default variables
 const int FPS = 60;
@@ -28,16 +29,121 @@ time_t begintime;
 int checkattack=0;
 int start=-1;
 int end=-1;
-int do_once[10][30];
+
 
 double soldiers_coordinate[10][2][10000];
-double tan1=0;
-double change=-1;
-double sign=0;
+
 
 int temp[30][10][1];
 
 int currentattackumber;
+char username[1000];
+
+int equal(char temp[])
+{
+    int i=0;
+    while(username[i]!='\0')
+    {
+        if(username[i]!=temp[i])
+        {
+            return 0;
+        }
+        i++;
+    }
+if(temp[i]!='\0'&&temp[i]!=' ')
+{
+    return 0;
+}
+
+return 1;
+
+}
+
+
+int checkusername()
+{
+    FILE *ptr= fopen("txtfiles/ScoreBoard/Usernames.txt","r+");
+        char x[1000];
+for(int i=0;i<1000;i++)
+{
+    x[i]='\0';
+}
+        while (fscanf(ptr, " %1023s", x) == 1)
+        {
+            if(equal(x))
+            {
+                return 1;
+            }
+        }
+
+        fprintf(ptr,username);
+        fprintf(ptr," ");
+        fclose(ptr);
+        return 0;
+
+}
+
+void getusername(SDL_Renderer *renderer)
+{
+    SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
+    SDL_RenderClear(renderer);
+
+
+
+    int length=0;
+    SDL_Event event;
+    SDL_bool Exit=SDL_FALSE;
+
+    SDL_Rect typebox;
+    typebox.x=SCREEN_WIDTH/2-100;
+    typebox.y=SCREEN_HEIGHT/2;
+    typebox.h=60;
+    typebox.w=SCREEN_WIDTH/5;
+
+    while(!Exit)
+    {
+
+
+        while(SDL_PollEvent(&event))
+        {
+            stringColor(renderer,SCREEN_WIDTH/2-100,typebox.y-50,"Please Enter Your Name", 0xffffffff);
+
+            switch(event.type)
+            {
+                case SDL_QUIT:
+                    exit(0);
+                    break;
+
+                case SDL_KEYDOWN:
+                    if(event.key.keysym.sym==SDLK_RETURN || event.key.keysym.sym==SDLK_KP_ENTER) {
+                        Exit = SDL_TRUE;
+                    }else if (event.key.keysym.sym==SDLK_BACKSPACE && length!=0)
+                    {
+                        SDL_RenderClear(renderer);
+                        length--;
+                        username[length]='\0';
+                        stringColor(renderer,SCREEN_WIDTH/2-100,typebox.y-50,"Please Enter Your Name", 0xffffffff);
+                        stringColor(renderer,typebox.x,typebox.y,username,0xff0000ff);
+                    }
+                    break;
+
+                case SDL_TEXTINPUT:
+                    username[length]=*event.text.text;
+                    length++;
+                    stringColor(renderer,typebox.x,typebox.y,username,0xff0000ff);
+                    break;
+            }
+        }
+
+        SDL_RenderPresent(renderer);
+    }
+
+}
+
+
+
+
+
 
 int isitthere(int num,double x,double y)
 {
@@ -71,7 +177,7 @@ void check_destination(int end, int playernum)
 {
 
 
-    if(!select_dots[0][end])
+    if(!select_dots[0][end]||(counter[end]==0))
     {
         select_dots[0][end]=1;
         select_dots[1][end]=playernum;
@@ -96,7 +202,7 @@ void check_destination(int end, int playernum)
 
 int next_soldier(int x, int y, int start)
 {
-    int overall=10;
+    int overall=60;
     switch(tags[start])
     {
         case 's':
@@ -139,25 +245,31 @@ int tempcurrentstate[30][10];
 ///////////////
 #define playercount 5
 
-int attack_soldiercount[playercount][10];
-int attack_status[playercount][10];
-int attackcount_mp=0;
-int attack_startingpoint[playercount][10];
-int attack_endingpoint[playercount][10];
-int soldiers_coordinates[playercount][2][10000];
-int startdraw[30][10];
-int eliminatefurthur[playercount][10];
+int do_once[playercount][10];
+ int attack_soldiercount[playercount][10];
+ bool attack_status[playercount][10];
+ int attackcount_mp=0;
+ int attack_startingpoint[playercount][10];
+ int attack_endingpoint[playercount][10];
+ double soldiers_coordinates[10][2][10000];
+ int startdraw[30][10];
+ int eliminatefurthur[playercount][10];
 
+double tan1[playercount][10];
+double change[playercount][10];
+double sign[playercount][10];
+int checkreset=0;
 
 /////////////
 
 
 int attack_function(int attacknum,int attackernum, SDL_Renderer *sdlRenderer )
 {
-    if(attack_soldiercount[attackernum][attacknum]==0)
+    if(attack_soldiercount[attackernum][attacknum]<=0)
     {
         attack_status[attackernum][attacknum]=0;
-        return 0;
+        do_once[attackernum][attacknum]=0;
+        return 1;
     }
 
     if(!do_once[attackernum][attacknum])
@@ -165,41 +277,42 @@ int attack_function(int attacknum,int attackernum, SDL_Renderer *sdlRenderer )
 
         do_once[attackernum][attacknum]=1;
 
-        tan1=(((double)(dots[1][end]) - (double)(dots[1][start])) /(double)((dots[0][end]) - (double)(dots[0][start])));
+        tan1[attackernum][attacknum]=( ((double)(dots[1][attack_endingpoint[attackernum][attacknum]]) - (double)(dots[1][attack_startingpoint[attackernum][attacknum]])) /    ((double) (dots[0][attack_endingpoint[attackernum][attacknum]]) - (double)(dots[0][attack_startingpoint[attackernum][attacknum]])));
 
-        if(tan>0)
+        if(tan1[attackernum][attacknum]>0)
         {
-            if(dots[0][end]>dots[0][start])
+            if(dots[0][attack_endingpoint[attackernum][attacknum]]>dots[0][attack_startingpoint[attackernum][attacknum]])
             {
-                change=1;
-                sign=1;
+                change[attackernum][attacknum]=2/(sqrt((tan1[attackernum][attacknum]*tan1[attackernum][attacknum])+1));
+                sign[attackernum][attacknum]=1;
             }
             else
             {
-                change=-1;
-                sign=1;
+                change[attackernum][attacknum]=-2/(sqrt((tan1[attackernum][attacknum]*tan1[attackernum][attacknum])+1));
+                sign[attackernum][attacknum]=1;
             }
 
         }
         else
         {
-            if(dots[0][end]>dots[0][start])
+            if(dots[0][attack_endingpoint[attackernum][attacknum]]>dots[0][attack_startingpoint[attackernum][attacknum]])
             {
-                change=1;
-                sign=1;
+                change[attackernum][attacknum]=2/(sqrt((tan1[attackernum][attacknum]*tan1[attackernum][attacknum])+1));
+                sign[attackernum][attacknum]=1;
             }
             else
             {
-                change=-1;
-                sign=1;
+                change[attackernum][attacknum]=-2/(sqrt((tan1[attackernum][attacknum]*tan1[attackernum][attacknum])+1));
+                sign[attackernum][attacknum]=1;
             }
 
         }
 
         for(int i=0;i<attack_soldiercount[attackernum][attacknum];i++)
         {
-            soldiers_coordinates[attackernum][0][i]=dots[0][attack_startingpoint[attackernum][attacknum]];
-            soldiers_coordinates[attacknum][1][i]=dots[1][attack_startingpoint[attackernum][attacknum]];
+
+            soldiers_coordinates[attacknum][0][i]=(double )dots[0][attack_startingpoint[attackernum][attacknum]];
+            soldiers_coordinates[attacknum][1][i]=(double) dots[1][attack_startingpoint[attackernum][attacknum]];
 
         }
 
@@ -207,9 +320,11 @@ int attack_function(int attacknum,int attackernum, SDL_Renderer *sdlRenderer )
         startdraw[attackernum][attacknum]=1;
 
     }
+
     int i;
     for(i=eliminatefurthur[attackernum][attacknum];i<startdraw[attackernum][attacknum];i++)
     {
+
         if(isitthere(attack_endingpoint[attackernum][attacknum],soldiers_coordinates[attacknum][0][i],soldiers_coordinates[attacknum][1][i]))
         {
             check_destination(attack_endingpoint[attackernum][attacknum],attackernum);
@@ -218,31 +333,37 @@ int attack_function(int attacknum,int attackernum, SDL_Renderer *sdlRenderer )
         }
 
 
-        filledCircleColor(sdlRenderer,(Sint16) soldiers_coordinates[attacknum][0][i],(Sint16)soldiers_coordinates[attacknum][1][i],5, playerscolors[attackernum]);
+        filledCircleColor(sdlRenderer, soldiers_coordinates[attacknum][0][i],soldiers_coordinates[attacknum][1][i],5, playerscolors[attackernum]);
+
+
+
         if(dots[0][attack_startingpoint[attackernum][attacknum]]!=dots[0][attack_endingpoint[attackernum][attacknum]])
         {
-            soldiers_coordinates[attacknum][0][i]+=change;
-            soldiers_coordinates[attacknum][0][i]+=(sign*change*tan1);
+            soldiers_coordinates[attacknum][0][i]+=change[attackernum][attacknum];
+            soldiers_coordinates[attacknum][1][i]+=((double)(sign[attackernum][attacknum]*change[attackernum][attacknum]*tan1[attackernum][attacknum]));
+
         }
+
         else
         {
             if(dots[1][attack_startingpoint[attackernum][attacknum]]>dots[1][attack_endingpoint[attackernum][attacknum]])
-                soldiers_coordinates[attacknum][0][i]--;
+                soldiers_coordinates[attacknum][0][i]-=2;
             else
-                soldiers_coordinates[attacknum][0][i]++;
+                soldiers_coordinates[attacknum][0][i]+=2;
         }
 
     }
 
     i--;
-    if(next_soldier(soldiers_coordinates[attacknum][0][i],soldiers_coordinates[attacknum][1][i],attack_startingpoint[attackernum][attacknum]))
+
+    if((startdraw[attackernum][attacknum]<attack_soldiercount[attackernum][attacknum])&&next_soldier(soldiers_coordinates[attacknum][0][i],soldiers_coordinates[attacknum][1][i],attack_startingpoint[attackernum][attacknum]))
     {
         startdraw[attackernum][attacknum]++;
         counter[attack_startingpoint[attackernum][attacknum]]--;
     }
 
 
-return 1;
+return 0;
 
 }
 
@@ -999,6 +1120,12 @@ int main()
 {
     //Initializing the window
 
+    for(int i=0;i<1000;i++)
+    {
+        username[i]='\0';
+    }
+
+
     SDL_bool shallExit = SDL_FALSE;
     if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER) < 0)
     {
@@ -1011,6 +1138,37 @@ int main()
                                              SCREEN_HEIGHT, SDL_WINDOW_OPENGL);
 
     SDL_Renderer *sdlRenderer = SDL_CreateRenderer(sdlWindow, -1, SDL_RENDERER_PRESENTVSYNC | SDL_RENDERER_ACCELERATED);
+
+
+
+
+    getusername(sdlRenderer);
+
+    int a=checkusername();
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
     for(int i=0;i<30;i++)
@@ -1027,7 +1185,13 @@ int main()
         }
     }
 
-
+for(int i=0;i<playercount;i++)
+{
+    for (int j=0;j<10;j++)
+    {
+        attack_status[i][j]=0;
+    }
+}
 
     struct potions potion[4];
     for(int i=0;i<4;i++)
@@ -1374,12 +1538,13 @@ begintime=time(NULL);
             {
                 for(int j=0;j<attackcount_mp;j++)
                 {
-                    if(attack_status[i][attackcount_mp])
+                    if(attack_status[i][j])
                     {
-                        attack_function(i,j,sdlRenderer);
+                        checkreset+=attack_function(j,i,sdlRenderer);
                     }
                 }
             }
+
 
 
 
@@ -1438,6 +1603,7 @@ begintime=time(NULL);
                                 attack_endingpoint[0][attackcount_mp]=target;
                                 DontRecolor[Dotnum]=0;
                                 attackcount_mp++;
+
                                 break;
 
                                 /*checkattack=counter[Dotnum];
