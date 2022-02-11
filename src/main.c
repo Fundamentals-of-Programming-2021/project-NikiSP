@@ -451,11 +451,14 @@ begintime=time(NULL);
                     case 3:
                         color1= 0xfff98c86; //darker blue
                         break;
+
+                }
+
                 if(usingwhat[0]==i&&using[0]==1)
                 {
                     boxColor(sdlRenderer,50,50,80,80,potion[potionYN].color);
                 }
-                }
+
             }
 
 

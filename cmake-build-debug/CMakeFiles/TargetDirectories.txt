@@ -1,3 +1,3 @@
-C:/Users/FasleJadid/Desktop/Project/cmake-build-debug/CMakeFiles/New_folder.dir
-C:/Users/FasleJadid/Desktop/Project/cmake-build-debug/CMakeFiles/edit_cache.dir
-C:/Users/FasleJadid/Desktop/Project/cmake-build-debug/CMakeFiles/rebuild_cache.dir
+C:/Users/FasleJadid/Desktop/Test/cmake-build-debug/CMakeFiles/New_folder.dir
+C:/Users/FasleJadid/Desktop/Test/cmake-build-debug/CMakeFiles/edit_cache.dir
+C:/Users/FasleJadid/Desktop/Test/cmake-build-debug/CMakeFiles/rebuild_cache.dir
