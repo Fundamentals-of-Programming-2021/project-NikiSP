@@ -4,4 +4,4 @@ project-NikiSP created by GitHub Classroom
 Niki Sepasian
 400105003
 
-Check tha Master branch for project files
+Check the Master branch for project files
